@@ -47,3 +47,38 @@ if (s.center) {
 ```
 
 以这个方式修改完每张卡牌的变化后，设置好transition属性，添加上具体位移，卡牌们就动起来了。  然后通过transitionend事件，判断是否运动完成。 完成之后清除transition属性。
+
+> 3D卡牌展示
+
+核心思想是计算鼠标到卡牌中心点的距离，根据距离的远近算出X,Y轴的偏移。  而阴影层的角度是根据反正切值计算出来的。
+
+```javascript
+ obj.addEventListener('mouseenter', function (ev) {
+    if (isMoving) return;
+    ev.stopPropagation();
+    let moveFn = function (ev) {
+        ev.stopPropagation();
+        let reP = {
+            x: ev.clientX - obj.getBoundingClientRect().left,
+            y: ev.clientY - obj.getBoundingClientRect().top
+        };
+        let rotateY = (obj.clientWidth / 2 - reP.x) / (obj.clientWidth / 2) * 20;
+        let rotateX = (reP.y - obj.clientHeight / 2) / (obj.clientHeight / 2) * 20;
+        let angle = Math.atan2(-(reP.x - obj.clientWidth / 2), -(obj.clientHeight / 2 - reP.y));
+        angle = angle * 180 / Math.PI;
+        if (rotateY > 20) rotateY = 20;
+        if (rotateX > 20) rotateX = 20;
+        obj.style.transform = 'rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale3d(1.08, 1.08, 1.08)';
+        shadow.style.background = 'linear-gradient(' + angle + 'deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 80%)';
+    };
+    obj.addEventListener('mousemove', moveFn, true);
+    let outFn = function () {
+        ev.stopPropagation();
+        obj.style.transform = 'none';
+        shadow.style.background = '';
+        obj.removeEventListener('mousemove', moveFn);
+        obj.removeEventListener('mouseout', outFn);
+    };
+    obj.addEventListener('mouseout', outFn, true);
+}, true);
+```
